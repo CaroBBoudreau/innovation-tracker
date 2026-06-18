@@ -216,6 +216,40 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
 
+  /* SETUP OVERLAY */
+  .setup-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .setup-overlay.hidden { display: none; }
+  .setup-box { background: #111827; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; width: 100%; max-width: 480px; padding: 44px; box-shadow: 0 40px 80px rgba(0,0,0,0.7); }
+  .setup-logo { font-family: 'Cormorant Garamond', serif; font-size: 12px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); opacity: 0.7; margin-bottom: 24px; }
+  .setup-title { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 600; color: #fff; margin-bottom: 8px; }
+  .setup-sub { font-size: 13px; color: var(--muted); margin-bottom: 32px; line-height: 1.6; }
+  .setup-tabs { display: flex; gap: 4px; background: rgba(255,255,255,0.04); border-radius: 10px; padding: 4px; margin-bottom: 28px; }
+  .setup-tab { flex: 1; background: none; border: none; border-radius: 7px; color: var(--muted); cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; padding: 8px; transition: all 0.2s; text-align: center; }
+  .setup-tab.active { background: rgba(232,194,107,0.15); color: var(--gold); }
+  .setup-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .setup-label { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+  .setup-input { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; padding: 11px 14px; outline: none; transition: border-color 0.2s; width: 100%; }
+  .setup-input:focus { border-color: var(--gold); }
+  .setup-input::placeholder { color: var(--muted); }
+  .setup-btn { background: linear-gradient(135deg, var(--gold), #c9a847); border: none; border-radius: 10px; color: #0a0e16; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.5px; padding: 13px; width: 100%; margin-top: 8px; transition: opacity 0.2s; }
+  .setup-btn:hover { opacity: 0.9; }
+  .setup-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .setup-msg { font-size: 12px; margin-top: 12px; padding: 10px 14px; border-radius: 8px; display: none; }
+  .setup-msg.error { background: rgba(231,76,122,0.12); color: var(--rose); display: block; }
+  .setup-msg.success { background: rgba(46,204,113,0.12); color: var(--green); display: block; }
+  .setup-code-box { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-top: 12px; display: none; }
+  .setup-code-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .setup-code-value { font-size: 15px; font-weight: 700; color: var(--gold); letter-spacing: 1px; word-break: break-all; }
+  .setup-code-hint { font-size: 11px; color: var(--muted2); margin-top: 8px; line-height: 1.5; }
+
+  /* SYNC STATUS */
+  .sync-indicator { position: fixed; bottom: 20px; right: 20px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 6px; z-index: 100; transition: all 0.3s; }
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+  .sync-indicator.saving .sync-dot { background: var(--orange); animation: pulse 1s infinite; }
+  .sync-indicator.saved .sync-dot { background: var(--green); }
+  .sync-indicator.error .sync-dot { background: var(--rose); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
   /* Cards view wrapper */
   #view-cards { position: relative; z-index: 10; margin: 0 48px 60px; }
 
@@ -230,6 +264,55 @@
 </style>
 </head>
 <body>
+
+<!-- SETUP OVERLAY -->
+<div class="setup-overlay" id="setup-overlay">
+  <div class="setup-box">
+    <div class="setup-logo">Cirque du Soleil · Innovation</div>
+    <div class="setup-title">Configuration</div>
+    <div class="setup-sub">Connecte l'outil à votre espace partagé pour que toute l'équipe voie les mêmes données en temps réel.</div>
+    <div class="setup-tabs">
+      <button class="setup-tab active" onclick="switchSetupTab('admin')" id="tab-admin">👑 Première configuration</button>
+      <button class="setup-tab" onclick="switchSetupTab('join')" id="tab-join">🔗 Rejoindre l'équipe</button>
+    </div>
+
+    <!-- ADMIN TAB -->
+    <div id="setup-admin">
+      <div class="setup-field">
+        <div class="setup-label">Master Key JSONBin</div>
+        <input type="password" class="setup-input" id="admin-key" placeholder="$2b$10$…">
+      </div>
+      <button class="setup-btn" onclick="setupAdmin()" id="admin-btn">Créer l'espace partagé</button>
+      <div class="setup-msg" id="admin-msg"></div>
+      <div class="setup-code-box" id="admin-code-box">
+        <div class="setup-code-label">Bin ID — partage ce code avec ton équipe via Teams</div>
+        <div class="setup-code-value" id="admin-bin-id"></div>
+        <div class="setup-code-hint">Tes collègues devront entrer ce code + la Master Key dans l'onglet "Rejoindre l'équipe" lors de leur première visite.</div>
+        <button class="setup-btn" onclick="finishSetup()" style="margin-top:16px">Accéder au tracker →</button>
+      </div>
+    </div>
+
+    <!-- JOIN TAB -->
+    <div id="setup-join" style="display:none">
+      <div class="setup-field">
+        <div class="setup-label">Master Key JSONBin</div>
+        <input type="password" class="setup-input" id="join-key" placeholder="$2b$10$…">
+      </div>
+      <div class="setup-field">
+        <div class="setup-label">Bin ID (fourni par ton administrateur)</div>
+        <input type="text" class="setup-input" id="join-bin" placeholder="ex. 6849abc123def…">
+      </div>
+      <button class="setup-btn" onclick="setupJoin()" id="join-btn">Rejoindre</button>
+      <div class="setup-msg" id="join-msg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SYNC INDICATOR -->
+<div class="sync-indicator" id="sync-indicator">
+  <div class="sync-dot"></div>
+  <span id="sync-text">Synchronisé</span>
+</div>
 
 <header>
   <div class="logo-area">
@@ -447,15 +530,176 @@ const DEFAULT_PROJECTS = [
   { id:11, categorie:'InnovFest',            name:'Enchanted Tools',    status:'À planifier',         resp:'Caro',            dates:'',                           budget:30000, budgetStatus:'À définir',   enAttente:'Calcul du budget',par:'',         application:'', todo:'Établir échéancier et objectifs',                         notes:'',                    priority:'' },
 ];
 
-let projects = JSON.parse(localStorage.getItem('cds_innovation_v3') || 'null') || DEFAULT_PROJECTS;
-let teamNames = JSON.parse(localStorage.getItem('cds_team_names') || 'null') || [...DEFAULT_NAMES];
+let projects = [];
+let teamNames = [...DEFAULT_NAMES];
 let editingId = null;
 let currentView = 'cards';
-let nextId = Math.max(...projects.map(p => p.id), 0) + 1;
+let nextId = 1;
 let calOffset = 0;
+let saveTimer = null;
 
-function save() { localStorage.setItem('cds_innovation_v3', JSON.stringify(projects)); }
-function saveNames() { localStorage.setItem('cds_team_names', JSON.stringify(teamNames)); }
+// ============================================================
+// CLOUD (JSONBin)
+// ============================================================
+function getCloudKey()   { return localStorage.getItem('jsonbin_master_key') || ''; }
+function getCloudBinId() { return localStorage.getItem('jsonbin_bin_id') || ''; }
+
+function setSyncStatus(state, text) {
+  const el = document.getElementById('sync-indicator');
+  const txt = document.getElementById('sync-text');
+  el.className = 'sync-indicator ' + state;
+  txt.textContent = text;
+}
+
+async function cloudLoad() {
+  const key = getCloudKey(), binId = getCloudBinId();
+  if (!key || !binId) return null;
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+      headers: { 'X-Master-Key': key }
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.record;
+  } catch(e) { return null; }
+}
+
+async function cloudSave() {
+  const key = getCloudKey(), binId = getCloudBinId();
+  if (!key || !binId) return;
+  setSyncStatus('saving', 'Sauvegarde…');
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': key },
+      body: JSON.stringify({ projects, teamNames })
+    });
+    if (res.ok) setSyncStatus('saved', 'Synchronisé ✓');
+    else setSyncStatus('error', 'Erreur de sync');
+  } catch(e) { setSyncStatus('error', 'Hors ligne'); }
+}
+
+async function cloudCreate(key) {
+  const res = await fetch('https://api.jsonbin.io/v3/b', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Master-Key': key,
+      'X-Bin-Name': 'CDS Innovation Tracker'
+    },
+    body: JSON.stringify({ projects: DEFAULT_PROJECTS, teamNames: DEFAULT_NAMES })
+  });
+  if (!res.ok) throw new Error('Clé invalide ou erreur réseau');
+  const data = await res.json();
+  return data.metadata.id;
+}
+
+function save() {
+  localStorage.setItem('cds_innovation_v3', JSON.stringify(projects));
+  localStorage.setItem('cds_team_names', JSON.stringify(teamNames));
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(cloudSave, 1500);
+}
+function saveNames() {
+  localStorage.setItem('cds_team_names', JSON.stringify(teamNames));
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(cloudSave, 1500);
+}
+
+// ============================================================
+// SETUP SCREEN
+// ============================================================
+function switchSetupTab(tab) {
+  document.getElementById('setup-admin').style.display = tab === 'admin' ? 'block' : 'none';
+  document.getElementById('setup-join').style.display  = tab === 'join'  ? 'block' : 'none';
+  document.getElementById('tab-admin').classList.toggle('active', tab === 'admin');
+  document.getElementById('tab-join').classList.toggle('active',  tab === 'join');
+}
+
+async function setupAdmin() {
+  const key = document.getElementById('admin-key').value.trim();
+  if (!key) return;
+  const btn = document.getElementById('admin-btn');
+  const msg = document.getElementById('admin-msg');
+  btn.disabled = true;
+  btn.textContent = 'Création en cours…';
+  msg.className = 'setup-msg';
+  try {
+    const binId = await cloudCreate(key);
+    localStorage.setItem('jsonbin_master_key', key);
+    localStorage.setItem('jsonbin_bin_id', binId);
+    document.getElementById('admin-bin-id').textContent = binId;
+    document.getElementById('admin-code-box').style.display = 'block';
+    btn.style.display = 'none';
+    msg.className = 'setup-msg success';
+    msg.textContent = '✓ Espace créé avec succès !';
+  } catch(e) {
+    msg.className = 'setup-msg error';
+    msg.textContent = '✗ ' + e.message + ' — vérifie ta Master Key.';
+    btn.disabled = false;
+    btn.textContent = 'Créer l\'espace partagé';
+  }
+}
+
+async function setupJoin() {
+  const key   = document.getElementById('join-key').value.trim();
+  const binId = document.getElementById('join-bin').value.trim();
+  if (!key || !binId) return;
+  const btn = document.getElementById('join-btn');
+  const msg = document.getElementById('join-msg');
+  btn.disabled = true;
+  btn.textContent = 'Connexion…';
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+      headers: { 'X-Master-Key': key }
+    });
+    if (!res.ok) throw new Error('Bin ID ou clé invalide');
+    const data = await res.json();
+    localStorage.setItem('jsonbin_master_key', key);
+    localStorage.setItem('jsonbin_bin_id', binId);
+    const record = data.record;
+    if (record.projects) {
+      projects = record.projects;
+      teamNames = record.teamNames || DEFAULT_NAMES;
+      nextId = Math.max(...projects.map(p => p.id), 0) + 1;
+    }
+    finishSetup();
+  } catch(e) {
+    msg.className = 'setup-msg error';
+    msg.textContent = '✗ ' + e.message;
+    btn.disabled = false;
+    btn.textContent = 'Rejoindre';
+  }
+}
+
+function finishSetup() {
+  document.getElementById('setup-overlay').classList.add('hidden');
+  render();
+}
+
+async function initApp() {
+  const key = getCloudKey(), binId = getCloudBinId();
+  if (!key || !binId) {
+    // Show setup screen
+    return;
+  }
+  // Hide setup, load from cloud
+  document.getElementById('setup-overlay').classList.add('hidden');
+  setSyncStatus('saving', 'Chargement…');
+  const record = await cloudLoad();
+  if (record && record.projects) {
+    projects  = record.projects;
+    teamNames = record.teamNames || DEFAULT_NAMES;
+  } else {
+    // Fallback to localStorage
+    projects  = JSON.parse(localStorage.getItem('cds_innovation_v3') || 'null') || DEFAULT_PROJECTS;
+    teamNames = JSON.parse(localStorage.getItem('cds_team_names')    || 'null') || [...DEFAULT_NAMES];
+    setSyncStatus('error', 'Mode hors ligne');
+  }
+  nextId = Math.max(...projects.map(p => p.id), 0) + 1;
+  setSyncStatus('saved', 'Synchronisé ✓');
+  render();
+}
 
 // ============================================================
 // HELPERS
@@ -512,12 +756,11 @@ function groupByCategory(filtered) {
 // ============================================================
 function renderStats() {
   const total = projects.length;
-  const actifs = projects.filter(p => ['En cours','Atelier planifié'].includes(p.status)).length;
-  const complet= projects.filter(p => p.status === 'Complété').length;
+  const actifs  = projects.filter(p => ['En cours','Atelier planifié'].includes(p.status)).length;
+  const complet = projects.filter(p => p.status === 'Complété').length;
   const budgetTotal = projects.reduce((s,p) => s+(p.budget||0), 0);
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-actifs').textContent = actifs;
-  document.getElementById('stat-ideation').textContent = idea;
   document.getElementById('stat-complet').textContent = complet;
   document.getElementById('stat-budget').textContent = budgetTotal > 0 ? '$'+budgetTotal.toLocaleString('fr-CA') : '—';
   const pct = Math.min(100, Math.round((complet/9)*100));
@@ -859,7 +1102,7 @@ document.addEventListener('keydown', e => {
   if ((e.metaKey||e.ctrlKey) && e.key === 'k') { e.preventDefault(); document.getElementById('search').focus(); }
 });
 
-render();
+initApp();
 </script>
 </body>
 </html>
