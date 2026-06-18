@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Innovation Tracker — Cirque du Soleil</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #080b10;
+    --card: #121921;
+    --border: rgba(255,255,255,0.07);
+    --gold: #e8c26b;
+    --teal: #00d4c8;
+    --violet: #9b59b6;
+    --rose: #e74c7a;
+    --orange: #f39c12;
+    --green: #2ecc71;
+    --text: #e8e8f0;
+    --muted: #6b7280;
+    --muted2: #9ca3af;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 10% 10%, rgba(155,89,182,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 90% 80%, rgba(0,212,200,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 50% 50%, rgba(232,194,107,0.04) 0%, transparent 60%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* HEADER */
+  header { position: relative; z-index: 10; padding: 40px 48px 0; display: flex; align-items: flex-start; justify-content: space-between; }
+  .logo-area { display: flex; flex-direction: column; gap: 6px; }
+  .logo-sun { width: 60px; height: 66px; margin-bottom: 10px; }
+  .logo-title { font-family: 'Cormorant Garamond', serif; font-size: 13px; font-weight: 300; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); opacity: 0.8; }
+  h1 { font-family: 'Cormorant Garamond', serif; font-size: 38px; font-weight: 300; color: #fff; line-height: 1.1; }
+  h1 span { color: var(--gold); font-style: italic; }
+  .header-right { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+  .date-badge { font-size: 12px; color: var(--muted); }
+
+  /* STATS */
+  .stats-band { position: relative; z-index: 10; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; margin: 36px 48px 0; background: var(--border); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .stat { background: var(--card); padding: 24px 20px; display: flex; flex-direction: column; gap: 6px; transition: background 0.2s; }
+  .stat:hover { background: #16202c; }
+  .stat-value { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 600; color: #fff; line-height: 1; }
+  .stat-value.gold { color: var(--gold); } .stat-value.teal { color: var(--teal); }
+  .stat-value.green { color: var(--green); } .stat-value.violet { color: var(--violet); }
+  .stat-label { font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+
+  /* TOOLBAR */
+  .toolbar { position: relative; z-index: 10; display: flex; align-items: center; justify-content: space-between; margin: 32px 48px 20px; gap: 16px; }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+  select, .search-input { background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; padding: 8px 14px; outline: none; transition: border-color 0.2s; }
+  select:focus, .search-input:focus { border-color: var(--gold); }
+  select option { background: #1a2332; }
+  .search-input { width: 200px; }
+  .search-input::placeholder { color: var(--muted); }
+
+  .view-toggle { display: flex; background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .view-btn { background: none; border: none; color: var(--muted); cursor: pointer; padding: 8px 14px; font-size: 13px; transition: all 0.2s; white-space: nowrap; font-family: 'Inter', sans-serif; }
+  .view-btn.active { background: rgba(232,194,107,0.12); color: var(--gold); }
+  .btn-add { background: linear-gradient(135deg, var(--gold), #c9a847); border: none; border-radius: 8px; color: #0a0e16; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.5px; padding: 9px 20px; transition: opacity 0.2s, transform 0.1s; white-space: nowrap; }
+  .btn-add:hover { opacity: 0.9; transform: translateY(-1px); }
+
+  /* GOAL BAR */
+  .goal-bar-wrap { position: relative; z-index: 10; margin: 0 48px 28px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 24px; display: flex; align-items: center; gap: 20px; }
+  .goal-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  .goal-track { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 99px; overflow: hidden; }
+  .goal-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--gold), var(--teal)); transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
+  .goal-pct { font-size: 13px; font-weight: 600; color: var(--gold); white-space: nowrap; }
+
+  /* SECTION HEADER */
+  .section-group { position: relative; z-index: 10; margin: 0 48px 8px; }
+  .section-header {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 16px; margin-top: 28px;
+  }
+  .section-header:first-child { margin-top: 0; }
+  .section-header-line { flex: 1; height: 1px; background: var(--border); }
+  .section-header-title {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  }
+  .section-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .section-count { font-size: 10px; font-weight: 400; color: var(--muted); background: rgba(255,255,255,0.06); border-radius: 10px; padding: 1px 7px; }
+
+  /* Section color theming */
+  .sec-internes   { color: var(--teal); }
+  .sec-internes .section-dot   { background: var(--teal); }
+  .sec-innovfest  { color: var(--gold); }
+  .sec-innovfest .section-dot  { background: var(--gold); }
+  .sec-partenaires{ color: var(--violet); }
+  .sec-partenaires .section-dot{ background: var(--violet); }
+
+  /* Divider plain */
+  .divider-plain { position: relative; z-index: 10; margin: 0 48px 24px; display: flex; align-items: center; gap: 14px; }
+  .divider-plain-line { flex: 1; height: 1px; background: var(--border); }
+  .divider-plain-text { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+
+  /* CARDS */
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 14px; margin-bottom: 10px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 22px; cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden; }
+  .card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-3px); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .card-title { font-family: 'Cormorant Garamond', serif; font-size: 21px; font-weight: 600; color: #fff; line-height: 1.2; }
+  .card-priority { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; flex-shrink: 0; }
+  .card-resp { font-size: 12px; color: var(--muted2); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .card-resp::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--teal); flex-shrink: 0; }
+  .card-status { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; letter-spacing: 0.5px; padding: 4px 10px; border-radius: 20px; margin-bottom: 12px; }
+  .card-status::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .card-meta-row { display: flex; gap: 7px; margin-bottom: 12px; flex-wrap: wrap; }
+  .meta-tag { display: flex; align-items: center; gap: 5px; font-size: 11px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 6px; padding: 4px 9px; color: var(--muted2); }
+  .meta-tag .meta-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-right: 2px; }
+  .card-todo { font-size: 12px; color: var(--muted2); line-height: 1.5; border-top: 1px solid var(--border); padding-top: 10px; }
+  .card-todo strong { color: var(--gold); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 4px; }
+  .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .card-budget { font-size: 13px; font-weight: 600; color: var(--gold); }
+  .card-budget-status { font-size: 11px; color: var(--muted); }
+  .card-dates { font-size: 11px; color: var(--teal); text-align: right; }
+  .note-badge { font-size: 11px; color: var(--violet); background: rgba(155,89,182,0.1); border-radius: 6px; padding: 2px 7px; margin-top: 4px; display: inline-block; }
+
+  /* TABLE */
+  #view-table { position: relative; z-index: 10; margin: 0 48px 60px; }
+  .table-section { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 28px; }
+  .table-section-header { padding: 12px 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead { background: rgba(232,194,107,0.04); }
+  th { padding: 12px 14px; text-align: left; font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; cursor: pointer; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.03); }
+  td { padding: 12px 14px; vertical-align: middle; color: var(--text); }
+  td.project-name { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; color: #fff; white-space: nowrap; }
+  td .resp-tag { font-size: 11px; color: var(--teal); }
+  .pill-chip { font-size: 10px; padding: 2px 8px; border-radius: 10px; white-space: nowrap; font-weight: 500; }
+
+  /* CALENDAR */
+  #view-calendar { position: relative; z-index: 10; margin: 0 48px 60px; }
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .cal-nav-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: #fff; }
+  .cal-nav-btn { background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); cursor: pointer; font-size: 14px; font-family: 'Inter', sans-serif; padding: 7px 16px; transition: all 0.2s; }
+  .cal-nav-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .cal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .cal-month { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .cal-month-header { padding: 14px 18px; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .cal-month-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: var(--gold); }
+  .cal-month-count { font-size: 11px; color: var(--muted); background: rgba(255,255,255,0.06); border-radius: 12px; padding: 2px 8px; }
+  .cal-month-body { padding: 12px; display: flex; flex-direction: column; gap: 8px; min-height: 80px; }
+  .cal-empty { font-size: 12px; color: var(--muted); text-align: center; padding: 20px 0; font-style: italic; }
+  .cal-project-chip { display: flex; align-items: flex-start; gap: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-left: 3px solid; border-radius: 10px; padding: 10px 12px; cursor: pointer; transition: all 0.2s; }
+  .cal-project-chip:hover { background: rgba(255,255,255,0.06); }
+  .cal-chip-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .cal-chip-body { flex: 1; min-width: 0; }
+  .cal-chip-name { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cal-chip-meta { display: flex; gap: 5px; flex-wrap: wrap; }
+  .cal-chip-tag { font-size: 10px; color: var(--muted2); background: rgba(255,255,255,0.05); border-radius: 4px; padding: 1px 6px; }
+  .cal-chip-dates { font-size: 10px; color: var(--teal); margin-top: 3px; }
+
+  /* STATUS + PRIORITY */
+  .s-planifier  { background: rgba(107,114,128,0.15); color: #9ca3af; }
+  .s-ideation   { background: rgba(155,89,182,0.15);  color: #c39bd3; }
+  .s-conception { background: rgba(52,152,219,0.15);  color: #7fb3d3; }
+  .s-confirmer  { background: rgba(243,156,18,0.15);  color: #f8c471; }
+  .s-planifie   { background: rgba(0,212,200,0.15);   color: var(--teal); }
+  .s-cours      { background: rgba(46,204,113,0.15);  color: #82e0aa; }
+  .s-pause      { background: rgba(231,76,60,0.15);   color: #f1948a; }
+  .s-complete   { background: rgba(46,204,113,0.25);  color: var(--green); }
+  .s-glace      { background: rgba(108,117,125,0.1);  color: #6c757d; }
+  .p-haute   { background: rgba(231,76,122,0.15); color: var(--rose); }
+  .p-moyenne { background: rgba(243,156,18,0.15); color: var(--orange); }
+  .p-basse   { background: rgba(46,204,113,0.15); color: var(--green); }
+  .p-none    { background: rgba(107,114,128,0.1); color: var(--muted); }
+
+  /* MODAL */
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+  .overlay.open { display: flex; }
+  .modal { background: #111827; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto; padding: 36px; position: relative; box-shadow: 0 40px 80px rgba(0,0,0,0.6); }
+  .modal-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 600; color: #fff; margin-bottom: 6px; }
+  .modal-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+  .modal-close { position: absolute; top: 20px; right: 24px; background: rgba(255,255,255,0.06); border: none; color: var(--muted); cursor: pointer; font-size: 18px; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+  .modal-close:hover { background: rgba(255,255,255,0.12); color: #fff; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-field { display: flex; flex-direction: column; gap: 6px; }
+  .form-field.full { grid-column: 1 / -1; }
+  label { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+  input[type="text"], input[type="number"], textarea, .form-select { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; padding: 10px 14px; outline: none; transition: border-color 0.2s; width: 100%; }
+  input[type="text"]:focus, input[type="number"]:focus, textarea:focus, .form-select:focus { border-color: var(--gold); }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+  textarea { resize: vertical; min-height: 70px; }
+  .form-select option { background: #1a2332; }
+
+  /* Add-name inline */
+  .add-name-row { display: flex; gap: 6px; margin-top: 6px; }
+  .add-name-input { flex: 1; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 12px; padding: 6px 10px; outline: none; }
+  .add-name-input::placeholder { color: var(--muted); }
+  .add-name-input:focus { border-color: var(--gold); }
+  .add-name-btn { background: rgba(232,194,107,0.12); border: 1px solid rgba(232,194,107,0.2); border-radius: 6px; color: var(--gold); cursor: pointer; font-size: 12px; font-family: 'Inter', sans-serif; padding: 6px 12px; transition: all 0.2s; white-space: nowrap; }
+  .add-name-btn:hover { background: rgba(232,194,107,0.2); }
+
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+  .btn-cancel { background: rgba(255,255,255,0.06); border: none; border-radius: 8px; color: var(--muted); cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; padding: 10px 20px; transition: all 0.2s; }
+  .btn-cancel:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+  .btn-save { background: linear-gradient(135deg, var(--gold), #c9a847); border: none; border-radius: 8px; color: #0a0e16; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; padding: 10px 24px; transition: opacity 0.2s; }
+  .btn-save:hover { opacity: 0.9; }
+  .btn-delete { background: rgba(231,76,122,0.12); border: 1px solid rgba(231,76,122,0.2); border-radius: 8px; color: var(--rose); cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; padding: 10px 18px; margin-right: auto; transition: all 0.2s; }
+  .btn-delete:hover { background: rgba(231,76,122,0.2); }
+
+  .empty-state { text-align: center; padding: 50px 20px; color: var(--muted); font-size: 14px; }
+  .empty-state .icon { font-size: 36px; margin-bottom: 10px; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+  /* Cards view wrapper */
+  #view-cards { position: relative; z-index: 10; margin: 0 48px 60px; }
+
+  @media (max-width: 900px) {
+    header, .stats-band, .toolbar, .goal-bar-wrap, #view-cards, #view-table, #view-calendar, .section-group, .divider-plain { margin-left: 20px; margin-right: 20px; }
+    .stats-band { grid-template-columns: repeat(3, 1fr); }
+    h1 { font-size: 28px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-field.full { grid-column: 1; }
+    .cal-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-area">
+    <div class="logo-title">Cirque du Soleil · Innovation</div>
+    <h1>Suivi des <span>Projets</span></h1>
+  </div>
+  <div class="header-right">
+    <span class="date-badge" id="current-date"></span>
+    <div class="view-toggle">
+      <button class="view-btn active" onclick="setView('cards')" id="btn-cards">⊞ Cartes</button>
+      <button class="view-btn" onclick="setView('table')" id="btn-table">☰ Tableau</button>
+      <button class="view-btn" onclick="setView('calendar')" id="btn-calendar">📅 Calendrier</button>
+    </div>
+  </div>
+</header>
+
+<div class="stats-band">
+  <div class="stat"><div class="stat-value gold" id="stat-total">0</div><div class="stat-label">Projets total</div></div>
+  <div class="stat"><div class="stat-value teal" id="stat-actifs">0</div><div class="stat-label">En cours / atelier</div></div>
+  <div class="stat"><div class="stat-value green" id="stat-complet">0</div><div class="stat-label">Complétés</div></div>
+  <div class="stat"><div class="stat-value gold" id="stat-budget">—</div><div class="stat-label">Budget estimé ($)</div></div>
+</div>
+
+<div class="goal-bar-wrap" style="margin-top:16px">
+  <span class="goal-label">Objectif 2026</span>
+  <div class="goal-track"><div class="goal-fill" id="goal-fill" style="width:0%"></div></div>
+  <span class="goal-pct" id="goal-pct">0 / 9 produits</span>
+</div>
+
+<div class="toolbar">
+  <div class="filters">
+    <input type="text" class="search-input" placeholder="🔍 Rechercher…" oninput="applyFilters()" id="search">
+    <select onchange="applyFilters()" id="filter-cat">
+      <option value="">Toutes les sections</option>
+      <option>Initiatives Internes</option>
+      <option>InnovFest</option>
+      <option>Partenaires externes</option>
+    </select>
+    <select onchange="applyFilters()" id="filter-resp"><option value="">Tous les responsables</option></select>
+    <select onchange="applyFilters()" id="filter-par"><option value="">Owner de la prochaine action</option></select>
+  </div>
+  <button class="btn-add" onclick="openModal()">+ Nouveau projet</button>
+</div>
+
+<div class="divider-plain">
+  <div class="divider-plain-line"></div>
+  <div class="divider-plain-text" id="proj-count-label">11 projets</div>
+  <div class="divider-plain-line"></div>
+</div>
+
+<!-- CARDS VIEW -->
+<div id="view-cards"></div>
+
+<!-- TABLE VIEW -->
+<div id="view-table" style="display:none"></div>
+
+<!-- CALENDAR VIEW -->
+<div id="view-calendar" style="display:none">
+  <div class="cal-nav">
+    <button class="cal-nav-btn" onclick="calShift(-1)">← Précédent</button>
+    <div class="cal-nav-title" id="cal-range-label"></div>
+    <button class="cal-nav-btn" onclick="calShift(1)">Suivant →</button>
+  </div>
+  <div class="cal-grid" id="cal-grid"></div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Nouveau projet</div>
+    <div class="modal-subtitle">Remplissez les informations du projet d'innovation.</div>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="form-grid">
+      <div class="form-field full">
+        <label>Nom du projet *</label>
+        <input type="text" id="f-name" placeholder="ex. Robot Dog">
+      </div>
+      <div class="form-field full">
+        <label>Section</label>
+        <select class="form-select" id="f-categorie">
+          <option>Initiatives Internes</option>
+          <option>InnovFest</option>
+          <option>Partenaires externes</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Statut</label>
+        <select class="form-select" id="f-status">
+          <option>À planifier</option><option>En idéation</option><option>En conception</option>
+          <option>Atelier à confirmer</option><option>Atelier planifié</option>
+          <option>En cours</option><option>En pause</option><option>Complété</option><option>Sur la glace</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Priorité</label>
+        <select class="form-select" id="f-priority">
+          <option value="">—</option><option>Haute</option><option>Moyenne</option><option>Basse</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Responsable(s)</label>
+        <input type="text" id="f-resp" placeholder="ex. Caro + Pierre">
+      </div>
+      <div class="form-field">
+        <label>Dates d'atelier</label>
+        <input type="text" id="f-dates" placeholder="ex. Juillet + Août">
+      </div>
+      <div class="form-field">
+        <label>Budget estimé ($)</label>
+        <input type="number" id="f-budget" placeholder="ex. 15000">
+      </div>
+      <div class="form-field">
+        <label>Budget — statut</label>
+        <select class="form-select" id="f-budget-status">
+          <option>À définir</option><option>En préparation</option><option>Soumis</option><option>Approuvé</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Prochaine étape</label>
+        <select class="form-select" id="f-en-attente">
+          <option value="">—</option>
+          <option>Idéation</option><option>Design acro</option><option>Calcul du budget</option>
+          <option>Échéancier</option><option>Pré-production</option><option>Workshop</option>
+          <option>En cours</option><option>Post-production</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Par</label>
+        <select class="form-select" id="f-par">
+          <option value="">—</option>
+        </select>
+        <div class="add-name-row">
+          <input type="text" class="add-name-input" id="f-new-name" placeholder="Ajouter un nom…">
+          <button class="add-name-btn" onclick="addNameToList()">+ Ajouter</button>
+        </div>
+      </div>
+      <div class="form-field full">
+        <label>Application (show / projet)</label>
+        <input type="text" id="f-application" placeholder="ex. Alegría, Corteo…">
+      </div>
+      <div class="form-field full">
+        <label>À faire — prochaines étapes</label>
+        <textarea id="f-todo" placeholder="Décrivez les prochaines étapes concrètes…"></textarea>
+      </div>
+      <div class="form-field full">
+        <label>Notes (partenaires, contraintes, lieux…)</label>
+        <textarea id="f-notes" placeholder="Partenaires, contraintes techniques, lieu, etc."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-delete" id="btn-delete" onclick="deleteProject()" style="display:none">Supprimer</button>
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-save" onclick="saveProject()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONSTANTS
+// ============================================================
+const STATUS_CLASS = {
+  'À planifier':'s-planifier','En idéation':'s-ideation','En conception':'s-conception',
+  'Atelier à confirmer':'s-confirmer','Atelier planifié':'s-planifie',
+  'En cours':'s-cours','En pause':'s-pause','Complété':'s-complete','Sur la glace':'s-glace'
+};
+const STATUS_ACCENT_COLOR = {
+  'À planifier':'#6b7280','En idéation':'#9b59b6','En conception':'#3498db',
+  'Atelier à confirmer':'#f39c12','Atelier planifié':'#00d4c8',
+  'En cours':'#2ecc71','En pause':'#e74c7a','Complété':'#2ecc71','Sur la glace':'#6c757d'
+};
+const PRIO_CLASS = { 'Haute':'p-haute','Moyenne':'p-moyenne','Basse':'p-basse','':'p-none' };
+
+const CATEGORIES = ['Initiatives Internes', 'InnovFest', 'Partenaires externes'];
+const CAT_STYLE = {
+  'Initiatives Internes': { cls: 'sec-internes',    dot: '#00d4c8', label: '⬡ Initiatives Internes' },
+  'InnovFest':            { cls: 'sec-innovfest',   dot: '#e8c26b', label: '✦ InnovFest' },
+  'Partenaires externes': { cls: 'sec-partenaires', dot: '#9b59b6', label: '◈ Partenaires externes' },
+};
+
+const EA_COLORS = {
+  'Idéation':        { bg:'rgba(155,89,182,0.15)',  color:'#c39bd3' },
+  'Design acro':     { bg:'rgba(52,152,219,0.15)',  color:'#7fb3d3' },
+  'Calcul du budget':{ bg:'rgba(232,194,107,0.15)', color:'#e8c26b' },
+  'Échéancier':      { bg:'rgba(243,156,18,0.15)',  color:'#f8c471' },
+  'Pré-production':  { bg:'rgba(0,212,200,0.15)',   color:'#00d4c8' },
+  'Workshop':        { bg:'rgba(231,76,122,0.15)',  color:'#e74c7a' },
+  'En cours':        { bg:'rgba(46,204,113,0.15)',  color:'#2ecc71' },
+  'Post-production': { bg:'rgba(107,114,128,0.15)', color:'#9ca3af' },
+};
+
+const FR_MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const MONTH_PARSE = {
+  'janvier':0,'février':1,'fevrier':1,'mars':2,'avril':3,'mai':4,'juin':5,
+  'juillet':6,'aout':7,'août':7,'septembre':8,'octobre':9,'novembre':10,'décembre':11,'decembre':11,
+  'ete':5,'été':5,'hiver':11,'printemps':2,'automne':8,
+};
+
+const DEFAULT_NAMES = ['Caroline','David','Émilie','Ewan','Ginger','Jérôme','Pierre','Richard'];
+
+// ============================================================
+// DATA
+// ============================================================
+const DEFAULT_PROJECTS = [
+  { id:1,  categorie:'Initiatives Internes', name:'Robot Dog',          status:'Atelier planifié',    resp:'Caro',            dates:'Juillet + Août',             budget:15000, budgetStatus:'À définir',   enAttente:'Workshop',       par:'',         application:'', todo:'Réserver le studio + fixer les dates exactes',            notes:'',                    priority:'' },
+  { id:2,  categorie:'Initiatives Internes', name:'Centrifuge',         status:'Atelier à confirmer', resp:'Pierre + Jérôme', dates:'Août (à confirmer)',          budget:null,  budgetStatus:'À définir',   enAttente:'Échéancier',     par:'',         application:'', todo:'Construction ou location? Établir échéancier et budget',  notes:'',                    priority:'' },
+  { id:3,  categorie:'Initiatives Internes', name:'Perceived Danger',   status:'Atelier planifié',    resp:'Ginger',          dates:'Juillet',                    budget:null,  budgetStatus:'Approuvé',    enAttente:'Workshop',       par:'',         application:'', todo:'Fixer la date (conversation à avoir)',                     notes:'Budget OK',           priority:'' },
+  { id:4,  categorie:'Initiatives Internes', name:'Magic Sand',         status:'À planifier',         resp:'David',           dates:'',                           budget:null,  budgetStatus:'À définir',   enAttente:'Échéancier',     par:'',         application:'', todo:'Établir échéancier et budget',                            notes:'',                    priority:'' },
+  { id:5,  categorie:'Initiatives Internes', name:'Slip, Slide & Wind', status:'À planifier',         resp:'Émilie',          dates:'',                           budget:null,  budgetStatus:'À définir',   enAttente:'Échéancier',     par:'',         application:'', todo:'Établir échéancier et budget',                            notes:'',                    priority:'' },
+  { id:6,  categorie:'Initiatives Internes', name:'3D Moonwalk',        status:'En idéation',         resp:'Ginger + Émilie', dates:'',                           budget:null,  budgetStatus:'À définir',   enAttente:'Idéation',       par:'',         application:'', todo:'Conception / idéation',                                   notes:'Partenaire : Moment Factory', priority:'' },
+  { id:7,  categorie:'Initiatives Internes', name:'Vectrices',          status:'En idéation',         resp:'Émilie + Caro',   dates:'',                           budget:null,  budgetStatus:'À définir',   enAttente:'Idéation',       par:'',         application:'', todo:'Idéation sur la technologie',                             notes:'Partenaire : SAT',    priority:'' },
+  { id:8,  categorie:'Initiatives Internes', name:'Under',              status:'À planifier',         resp:'Jérôme',          dates:'Été (si aquarium extérieur)',budget:null,  budgetStatus:'À définir',   enAttente:'Échéancier',     par:'',         application:'', todo:'Établir échéancier et budget',                            notes:'',                    priority:'' },
+  { id:9,  categorie:'Initiatives Internes', name:'Trampo Mouche',      status:'En idéation',         resp:'Pierre + Émilie', dates:'Studio E (à confirmer)',     budget:null,  budgetStatus:'À définir',   enAttente:'Idéation',       par:'',         application:'', todo:'Échéancier, budget, atelier, idéation',                   notes:'',                    priority:'' },
+  { id:10, categorie:'Initiatives Internes', name:'One.Two.Too',        status:'En idéation',         resp:'Ginger',          dates:'',                           budget:null,  budgetStatus:'À définir',   enAttente:'Idéation',       par:'',         application:'', todo:'Objectifs + idéation technologique',                      notes:'',                    priority:'' },
+  { id:11, categorie:'InnovFest',            name:'Enchanted Tools',    status:'À planifier',         resp:'Caro',            dates:'',                           budget:30000, budgetStatus:'À définir',   enAttente:'Calcul du budget',par:'',         application:'', todo:'Établir échéancier et objectifs',                         notes:'',                    priority:'' },
+];
+
+let projects = JSON.parse(localStorage.getItem('cds_innovation_v3') || 'null') || DEFAULT_PROJECTS;
+let teamNames = JSON.parse(localStorage.getItem('cds_team_names') || 'null') || [...DEFAULT_NAMES];
+let editingId = null;
+let currentView = 'cards';
+let nextId = Math.max(...projects.map(p => p.id), 0) + 1;
+let calOffset = 0;
+
+function save() { localStorage.setItem('cds_innovation_v3', JSON.stringify(projects)); }
+function saveNames() { localStorage.setItem('cds_team_names', JSON.stringify(teamNames)); }
+
+// ============================================================
+// HELPERS
+// ============================================================
+function fmtBudget(b) { return b ? '$' + Number(b).toLocaleString('fr-CA') : null; }
+function statusChip(s) { return `<span class="card-status ${STATUS_CLASS[s]||''}">${s}</span>`; }
+function eaChip(val) {
+  if (!val) return '<span style="color:var(--muted);font-size:12px">—</span>';
+  const c = EA_COLORS[val] || { bg:'rgba(255,255,255,0.06)', color:'var(--muted2)' };
+  return `<span class="pill-chip" style="background:${c.bg};color:${c.color}">${val}</span>`;
+}
+function parChip(val) {
+  if (!val) return '<span style="color:var(--muted);font-size:12px">—</span>';
+  return `<span class="pill-chip" style="background:rgba(0,212,200,0.1);color:var(--teal)">${val}</span>`;
+}
+function parseMonths(str) {
+  if (!str) return [];
+  const lower = str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const months = new Set();
+  for (const [k,i] of Object.entries(MONTH_PARSE)) {
+    if (lower.includes(k.normalize('NFD').replace(/[\u0300-\u036f]/g,''))) months.add(i);
+  }
+  return [...months].sort((a,b)=>a-b);
+}
+
+// ============================================================
+// FILTER
+// ============================================================
+function getFiltered() {
+  const q  = (document.getElementById('search').value||'').toLowerCase();
+  const sc = document.getElementById('filter-cat').value;
+  const sr = document.getElementById('filter-resp').value;
+  const sp = document.getElementById('filter-par').value;
+  return projects.filter(p =>
+    (!q  || p.name.toLowerCase().includes(q) || (p.resp||'').toLowerCase().includes(q) || (p.notes||'').toLowerCase().includes(q) || (p.application||'').toLowerCase().includes(q) || (p.par||'').toLowerCase().includes(q)) &&
+    (!sc || p.categorie === sc) &&
+    (!sr || (p.resp||'').includes(sr)) &&
+    (!sp || (p.par||'') === sp)
+  );
+}
+
+function groupByCategory(filtered) {
+  const groups = {};
+  for (const cat of CATEGORIES) groups[cat] = [];
+  for (const p of filtered) {
+    const cat = p.categorie || 'Initiatives Internes';
+    if (groups[cat]) groups[cat].push(p); else groups['Initiatives Internes'].push(p);
+  }
+  return groups;
+}
+
+// ============================================================
+// STATS
+// ============================================================
+function renderStats() {
+  const total = projects.length;
+  const actifs = projects.filter(p => ['En cours','Atelier planifié'].includes(p.status)).length;
+  const complet= projects.filter(p => p.status === 'Complété').length;
+  const budgetTotal = projects.reduce((s,p) => s+(p.budget||0), 0);
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-actifs').textContent = actifs;
+  document.getElementById('stat-ideation').textContent = idea;
+  document.getElementById('stat-complet').textContent = complet;
+  document.getElementById('stat-budget').textContent = budgetTotal > 0 ? '$'+budgetTotal.toLocaleString('fr-CA') : '—';
+  const pct = Math.min(100, Math.round((complet/9)*100));
+  document.getElementById('goal-fill').style.width = pct+'%';
+  document.getElementById('goal-pct').textContent = `${complet} / 9 produits complétés`;
+}
+
+function renderResponsables() {
+  const resp = [...new Set(projects.flatMap(p => (p.resp||'').split(/\s*\+\s*/).map(r=>r.trim())).filter(Boolean))].sort();
+  const sel = document.getElementById('filter-resp');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Tous les responsables</option>' + resp.map(r=>`<option${r===cur?' selected':''}>${r}</option>`).join('');
+}
+
+function renderParFilter() {
+  const sel = document.getElementById('filter-par');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Owner de la prochaine action</option>' +
+    teamNames.map(n => `<option${n===cur?' selected':''}>${n}</option>`).join('');
+}
+
+// ============================================================
+// SECTION HEADER HTML
+// ============================================================
+function sectionHeaderHTML(cat, count) {
+  const s = CAT_STYLE[cat];
+  return `
+  <div class="section-header">
+    <div class="section-header-line"></div>
+    <div class="section-header-title ${s.cls}">
+      <div class="section-dot" style="background:${s.dot}"></div>
+      ${cat}
+      <span class="section-count">${count}</span>
+    </div>
+    <div class="section-header-line"></div>
+  </div>`;
+}
+
+// ============================================================
+// CARDS
+// ============================================================
+function renderCards(filtered) {
+  const wrap = document.getElementById('view-cards');
+  const groups = groupByCategory(filtered);
+  let html = '';
+  for (const cat of CATEGORIES) {
+    const list = groups[cat];
+    html += sectionHeaderHTML(cat, list.length);
+    if (!list.length) {
+      html += `<div class="empty-state" style="padding:30px 0"><div class="icon">✦</div>Aucun projet dans cette section.</div>`;
+    } else {
+      html += `<div class="cards-grid">` + list.map(p => {
+        const ac = STATUS_ACCENT_COLOR[p.status] || '#6b7280';
+        const budget = fmtBudget(p.budget);
+        const prioClass = PRIO_CLASS[p.priority]||'p-none';
+        return `
+        <div class="card" onclick="openModal(${p.id})">
+          <div style="position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0;background:${ac}"></div>
+          <div class="card-top">
+            <div class="card-title">${p.name}</div>
+            ${p.priority ? `<span class="card-priority ${prioClass}">${p.priority}</span>` : ''}
+          </div>
+          ${p.resp ? `<div class="card-resp">${p.resp}</div>` : ''}
+          ${statusChip(p.status)}
+          <div class="card-meta-row">
+            ${p.enAttente ? `<div class="meta-tag"><span class="meta-label">Étape :</span>${p.enAttente}</div>` : ''}
+            ${p.par ? `<div class="meta-tag"><span class="meta-label">Par :</span>${p.par}</div>` : ''}
+            ${p.application ? `<div class="meta-tag"><span class="meta-label">Show :</span>${p.application}</div>` : ''}
+          </div>
+          ${p.todo ? `<div class="card-todo"><strong>→ À faire</strong>${p.todo}</div>` : ''}
+          ${p.notes ? `<div style="margin-top:8px"><span class="note-badge">✦ ${p.notes}</span></div>` : ''}
+          <div class="card-footer">
+            <div><div class="card-budget">${budget||'—'}</div><div class="card-budget-status">${p.budgetStatus}</div></div>
+            ${p.dates ? `<div class="card-dates">📅 ${p.dates}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('') + `</div>`;
+    }
+  }
+  wrap.innerHTML = html;
+}
+
+// ============================================================
+// TABLE
+// ============================================================
+function renderTable(filtered) {
+  const wrap = document.getElementById('view-table');
+  const groups = groupByCategory(filtered);
+  let html = '';
+  for (const cat of CATEGORIES) {
+    const list = groups[cat];
+    const s = CAT_STYLE[cat];
+    html += `
+    <div class="table-section">
+      <div class="table-section-header">
+        <div class="section-dot" style="background:${s.dot};width:8px;height:8px;border-radius:50%"></div>
+        <span style="font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:${s.dot}">${cat}</span>
+        <span class="section-count">${list.length}</span>
+      </div>
+      <table>
+        <thead><tr>
+          <th>Projet</th><th>Statut</th><th>Responsable(s)</th><th>Dates atelier</th>
+          <th>Budget ($)</th><th>Prochaine étape</th><th>Par</th><th>Application</th><th>Priorité</th><th>Notes</th>
+        </tr></thead>
+        <tbody>`;
+    if (!list.length) {
+      html += `<tr><td colspan="10" style="text-align:center;padding:28px;color:var(--muted);font-style:italic">Aucun projet dans cette section.</td></tr>`;
+    } else {
+      html += list.map(p => {
+        const budget = fmtBudget(p.budget);
+        const prioClass = PRIO_CLASS[p.priority]||'p-none';
+        return `
+        <tr onclick="openModal(${p.id})">
+          <td class="project-name">${p.name}${p.resp ? `<div class="resp-tag">${p.resp}</div>` : ''}</td>
+          <td>${statusChip(p.status)}</td>
+          <td style="color:var(--muted2);font-size:12px">${p.resp||'—'}</td>
+          <td style="color:var(--teal);font-size:12px">${p.dates||'—'}</td>
+          <td style="font-weight:600;color:var(--gold)">${budget||'—'}<div style="font-size:11px;color:var(--muted);font-weight:400">${p.budgetStatus}</div></td>
+          <td>${eaChip(p.enAttente)}</td>
+          <td>${parChip(p.par)}</td>
+          <td style="font-size:12px;color:var(--muted2)">${p.application||'—'}</td>
+          <td>${p.priority ? `<span class="card-priority ${prioClass}" style="font-size:10px;padding:3px 8px;border-radius:4px">${p.priority}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
+          <td style="font-size:12px;color:var(--muted2);max-width:160px">${p.notes||'—'}</td>
+        </tr>`;
+      }).join('');
+    }
+    html += `</tbody></table></div>`;
+  }
+  wrap.innerHTML = html;
+}
+
+// ============================================================
+// CALENDAR
+// ============================================================
+function renderCalendar() {
+  const now = new Date();
+  const startMonth = now.getMonth() + calOffset;
+  const startYear  = now.getFullYear() + Math.floor(startMonth / 12);
+  const startMod   = ((startMonth % 12) + 12) % 12;
+  const months = [];
+  for (let i = 0; i < 6; i++) {
+    const mIdx = ((startMod + i) % 12);
+    const yr   = startYear + Math.floor((startMod + i) / 12);
+    months.push({ mIdx, yr });
+  }
+  const first = months[0], last = months[5];
+  document.getElementById('cal-range-label').textContent =
+    `${FR_MONTHS[first.mIdx]} – ${FR_MONTHS[last.mIdx]} ${last.yr}`;
+
+  const byMonth = {};
+  for (const m of months) byMonth[`${m.yr}-${m.mIdx}`] = [];
+  for (const p of projects) {
+    const parsed = parseMonths(p.dates);
+    for (const mIdx of parsed) {
+      for (const m of months) {
+        if (m.mIdx === mIdx) { byMonth[`${m.yr}-${m.mIdx}`].push(p); break; }
+      }
+    }
+  }
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = months.map(({ mIdx, yr }) => {
+    const key = `${yr}-${mIdx}`;
+    const projs = byMonth[key] || [];
+    return `
+    <div class="cal-month">
+      <div class="cal-month-header">
+        <div class="cal-month-name">${FR_MONTHS[mIdx]} <span style="font-size:14px;opacity:0.5">${yr}</span></div>
+        ${projs.length ? `<div class="cal-month-count">${projs.length} atelier${projs.length>1?'s':''}</div>` : ''}
+      </div>
+      <div class="cal-month-body">
+        ${!projs.length
+          ? '<div class="cal-empty">Aucun atelier planifié</div>'
+          : projs.map(p => {
+              const col = STATUS_ACCENT_COLOR[p.status]||'#6b7280';
+              const catS = CAT_STYLE[p.categorie||'Initiatives Internes'];
+              return `
+              <div class="cal-project-chip" onclick="openModal(${p.id})" style="border-left-color:${col}">
+                <div class="cal-chip-dot" style="background:${col}"></div>
+                <div class="cal-chip-body">
+                  <div class="cal-chip-name">${p.name}</div>
+                  <div class="cal-chip-meta">
+                    ${p.resp ? `<span class="cal-chip-tag">${p.resp}</span>` : ''}
+                    ${p.par ? `<span class="cal-chip-tag" style="color:var(--teal)">par ${p.par}</span>` : ''}
+                    ${p.enAttente ? `<span class="cal-chip-tag" style="color:var(--gold)">⏳ ${p.enAttente}</span>` : ''}
+                    ${p.application ? `<span class="cal-chip-tag" style="color:var(--violet)">✦ ${p.application}</span>` : ''}
+                    <span class="cal-chip-tag" style="color:${catS.dot}">${p.categorie||'Initiatives Internes'}</span>
+                  </div>
+                  ${p.dates ? `<div class="cal-chip-dates">📅 ${p.dates}</div>` : ''}
+                </div>
+              </div>`;
+            }).join('')
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function calShift(d) { calOffset += d * 6; renderCalendar(); }
+
+// ============================================================
+// RENDER
+// ============================================================
+function applyFilters() { render(); }
+
+function render() {
+  const filtered = getFiltered();
+  renderStats();
+  renderResponsables();
+  renderParFilter();
+  const label = filtered.length === projects.length
+    ? `${projects.length} projets`
+    : `${filtered.length} / ${projects.length} projets`;
+  document.getElementById('proj-count-label').textContent = label;
+  if (currentView === 'cards')    renderCards(filtered);
+  else if (currentView === 'table')    renderTable(filtered);
+  else if (currentView === 'calendar') renderCalendar();
+}
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('view-cards').style.display    = v==='cards'    ? 'block' : 'none';
+  document.getElementById('view-table').style.display    = v==='table'    ? 'block' : 'none';
+  document.getElementById('view-calendar').style.display = v==='calendar' ? 'block' : 'none';
+  ['cards','table','calendar'].forEach(x => document.getElementById('btn-'+x).classList.toggle('active', v===x));
+  render();
+}
+
+// ============================================================
+// TEAM NAMES
+// ============================================================
+function populateParSelect(selectedVal) {
+  const sel = document.getElementById('f-par');
+  sel.innerHTML = '<option value="">—</option>' +
+    teamNames.map(n => `<option${n===selectedVal?' selected':''}>${n}</option>`).join('');
+}
+
+function addNameToList() {
+  const input = document.getElementById('f-new-name');
+  const name = input.value.trim();
+  if (!name || teamNames.includes(name)) { input.value = ''; return; }
+  teamNames.push(name);
+  teamNames.sort();
+  saveNames();
+  populateParSelect(name);
+  document.getElementById('f-par').value = name;
+  input.value = '';
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(id) {
+  editingId = id || null;
+  const del = document.getElementById('btn-delete');
+  populateParSelect('');
+  if (id) {
+    const p = projects.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('modal-title').textContent = p.name;
+    document.getElementById('f-name').value = p.name;
+    document.getElementById('f-categorie').value = p.categorie || 'Initiatives Internes';
+    document.getElementById('f-status').value = p.status;
+    document.getElementById('f-priority').value = p.priority || '';
+    document.getElementById('f-resp').value = p.resp || '';
+    document.getElementById('f-dates').value = p.dates || '';
+    document.getElementById('f-budget').value = p.budget || '';
+    document.getElementById('f-budget-status').value = p.budgetStatus || 'À définir';
+    document.getElementById('f-en-attente').value = p.enAttente || '';
+    populateParSelect(p.par || '');
+    document.getElementById('f-application').value = p.application || '';
+    document.getElementById('f-todo').value = p.todo || '';
+    document.getElementById('f-notes').value = p.notes || '';
+    del.style.display = 'inline-block';
+  } else {
+    document.getElementById('modal-title').textContent = 'Nouveau projet';
+    ['f-name','f-resp','f-dates','f-application','f-todo','f-notes'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('f-budget').value = '';
+    document.getElementById('f-categorie').value = 'Initiatives Internes';
+    document.getElementById('f-status').value = 'À planifier';
+    document.getElementById('f-priority').value = '';
+    document.getElementById('f-budget-status').value = 'À définir';
+    document.getElementById('f-en-attente').value = '';
+    del.style.display = 'none';
+  }
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('f-name').focus();
+}
+
+function closeModal() { document.getElementById('overlay').classList.remove('open'); editingId = null; }
+function handleOverlayClick(e) { if (e.target===document.getElementById('overlay')) closeModal(); }
+
+function saveProject() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { document.getElementById('f-name').focus(); return; }
+  const data = {
+    name,
+    categorie: document.getElementById('f-categorie').value,
+    status: document.getElementById('f-status').value,
+    priority: document.getElementById('f-priority').value,
+    resp: document.getElementById('f-resp').value.trim(),
+    dates: document.getElementById('f-dates').value.trim(),
+    budget: parseFloat(document.getElementById('f-budget').value) || null,
+    budgetStatus: document.getElementById('f-budget-status').value,
+    enAttente: document.getElementById('f-en-attente').value,
+    par: document.getElementById('f-par').value,
+    application: document.getElementById('f-application').value.trim(),
+    todo: document.getElementById('f-todo').value.trim(),
+    notes: document.getElementById('f-notes').value.trim(),
+  };
+  if (editingId) {
+    const idx = projects.findIndex(p => p.id === editingId);
+    if (idx !== -1) projects[idx] = { ...projects[idx], ...data };
+  } else {
+    projects.push({ id: nextId++, ...data });
+  }
+  save(); closeModal(); render();
+}
+
+function deleteProject() {
+  if (!editingId) return;
+  if (!confirm('Supprimer ce projet définitivement ?')) return;
+  projects = projects.filter(p => p.id !== editingId);
+  save(); closeModal(); render();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.getElementById('current-date').textContent =
+  'Mis à jour le ' + new Date().toLocaleDateString('fr-CA', { year:'numeric', month:'long', day:'numeric' });
+
+document.getElementById('f-new-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); addNameToList(); }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if ((e.metaKey||e.ctrlKey) && e.key === 'k') { e.preventDefault(); document.getElementById('search').focus(); }
+});
+
+render();
+</script>
+</body>
+</html>
