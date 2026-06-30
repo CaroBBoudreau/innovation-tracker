@@ -572,11 +572,53 @@ async function cloudSave() {
     const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'X-Master-Key': key },
-      body: JSON.stringify({ projects, teamNames })
+      body: JSON.stringify({ projects, teamNames, lastSaved: Date.now() })
     });
-    if (res.ok) setSyncStatus('saved', 'Synchronisé ✓');
-    else setSyncStatus('error', 'Erreur de sync');
+    if (res.ok) {
+      const data = await res.json();
+      lastKnownVersion = data.metadata?.version ?? lastKnownVersion;
+      setSyncStatus('saved', 'Synchronisé ✓');
+    } else setSyncStatus('error', 'Erreur de sync');
   } catch(e) { setSyncStatus('error', 'Hors ligne'); }
+}
+
+let lastKnownVersion = null;
+let pollTimer = null;
+
+async function pollForUpdates() {
+  const key = getCloudKey(), binId = getCloudBinId();
+  if (!key || !binId) return;
+  // Don't poll while we're actively saving
+  if (saveTimer) return;
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+      headers: { 'X-Master-Key': key }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const version = data.metadata?.version;
+    if (lastKnownVersion !== null && version !== lastKnownVersion) {
+      // Remote data changed — update local
+      lastKnownVersion = version;
+      const record = data.record;
+      if (record && record.projects) {
+        projects = record.projects;
+        teamNames = record.teamNames || DEFAULT_NAMES;
+        localStorage.setItem('cds_innovation_v3', JSON.stringify(projects));
+        localStorage.setItem('cds_team_names', JSON.stringify(teamNames));
+        nextId = Math.max(...projects.map(p => p.id), 0) + 1;
+        render();
+        setSyncStatus('saved', 'Mis à jour ✓');
+      }
+    } else if (lastKnownVersion === null) {
+      lastKnownVersion = version;
+    }
+  } catch(e) { /* réseau indisponible, on réessaie au prochain cycle */ }
+}
+
+function startPolling() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(pollForUpdates, 30000); // toutes les 30 secondes
 }
 
 async function cloudCreate(key) {
@@ -675,6 +717,7 @@ async function setupJoin() {
 function finishSetup() {
   document.getElementById('setup-overlay').classList.add('hidden');
   render();
+  startPolling();
 }
 
 async function initApp() {
@@ -686,11 +729,22 @@ async function initApp() {
   // Hide setup, load from cloud
   document.getElementById('setup-overlay').classList.add('hidden');
   setSyncStatus('saving', 'Chargement…');
-  const record = await cloudLoad();
-  if (record && record.projects) {
-    projects  = record.projects;
-    teamNames = record.teamNames || DEFAULT_NAMES;
-  } else {
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+      headers: { 'X-Master-Key': key }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      lastKnownVersion = data.metadata?.version ?? null;
+      const record = data.record;
+      if (record && record.projects) {
+        projects  = record.projects;
+        teamNames = record.teamNames || DEFAULT_NAMES;
+      }
+    } else {
+      throw new Error('offline');
+    }
+  } catch(e) {
     // Fallback to localStorage
     projects  = JSON.parse(localStorage.getItem('cds_innovation_v3') || 'null') || DEFAULT_PROJECTS;
     teamNames = JSON.parse(localStorage.getItem('cds_team_names')    || 'null') || [...DEFAULT_NAMES];
@@ -699,6 +753,7 @@ async function initApp() {
   nextId = Math.max(...projects.map(p => p.id), 0) + 1;
   setSyncStatus('saved', 'Synchronisé ✓');
   render();
+  startPolling();
 }
 
 // ============================================================
