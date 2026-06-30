@@ -567,6 +567,7 @@ async function cloudLoad() {
 async function cloudSave() {
   const key = getCloudKey(), binId = getCloudBinId();
   if (!key || !binId) return;
+  isSaving = true;
   setSyncStatus('saving', 'Sauvegarde…');
   try {
     const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
@@ -580,16 +581,16 @@ async function cloudSave() {
       setSyncStatus('saved', 'Synchronisé ✓');
     } else setSyncStatus('error', 'Erreur de sync');
   } catch(e) { setSyncStatus('error', 'Hors ligne'); }
+  isSaving = false;
 }
 
 let lastKnownVersion = null;
 let pollTimer = null;
+let isSaving = false;
 
 async function pollForUpdates() {
   const key = getCloudKey(), binId = getCloudBinId();
-  if (!key || !binId) return;
-  // Don't poll while we're actively saving
-  if (saveTimer) return;
+  if (!key || !binId || isSaving) return;
   try {
     const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
       headers: { 'X-Master-Key': key }
@@ -598,7 +599,6 @@ async function pollForUpdates() {
     const data = await res.json();
     const version = data.metadata?.version;
     if (lastKnownVersion !== null && version !== lastKnownVersion) {
-      // Remote data changed — update local
       lastKnownVersion = version;
       const record = data.record;
       if (record && record.projects) {
@@ -699,6 +699,7 @@ async function setupJoin() {
     const data = await res.json();
     localStorage.setItem('jsonbin_master_key', key);
     localStorage.setItem('jsonbin_bin_id', binId);
+    lastKnownVersion = data.metadata?.version ?? null;
     const record = data.record;
     if (record.projects) {
       projects = record.projects;
