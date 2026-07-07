@@ -129,7 +129,10 @@
   .table-section-header { padding: 12px 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   thead { background: rgba(232,194,107,0.04); }
-  th { padding: 12px 14px; text-align: left; font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th { padding: 12px 14px; text-align: left; font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; transition: background 0.15s; }
+  th[draggable] { cursor: grab; }
+  th[draggable]:active { cursor: grabbing; }
+  th.col-drag-over { background: rgba(232,194,107,0.15); border-bottom: 2px solid var(--gold); color: var(--gold); }
   tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; cursor: pointer; }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: rgba(255,255,255,0.03); }
@@ -333,7 +336,7 @@
   <div class="stat"><div class="stat-value gold" id="stat-total">0</div><div class="stat-label">Projets total</div></div>
   <div class="stat"><div class="stat-value teal" id="stat-actifs">0</div><div class="stat-label">En cours / atelier</div></div>
   <div class="stat"><div class="stat-value green" id="stat-complet">0</div><div class="stat-label">Complétés</div></div>
-  <div class="stat"><div class="stat-value gold" id="stat-budget">—</div><div class="stat-label">Budget estimé ($)</div></div>
+  <div class="stat"><div class="stat-value gold" id="stat-budget">—</div><div class="stat-label">Budget engagé (USD)</div></div>
 </div>
 
 <div class="goal-bar-wrap" style="margin-top:16px">
@@ -351,8 +354,11 @@
       <option>InnovFest</option>
       <option>Partenaires externes</option>
     </select>
-    <select onchange="applyFilters()" id="filter-resp"><option value="">Tous les responsables</option></select>
     <select onchange="applyFilters()" id="filter-par"><option value="">Owner de la prochaine action</option></select>
+    <select onchange="applyFilters()" id="filter-prio">
+      <option value="">Toutes les priorités</option>
+      <option>Haute</option><option>Moyenne</option><option>Basse</option>
+    </select>
   </div>
   <button class="btn-add" onclick="openModal()">+ Nouveau projet</button>
 </div>
@@ -421,8 +427,12 @@
         <input type="text" id="f-dates" placeholder="ex. Juillet + Août">
       </div>
       <div class="form-field">
-        <label>Budget estimé ($)</label>
+        <label>Budget engagé (USD)</label>
         <input type="number" id="f-budget" placeholder="ex. 15000">
+      </div>
+      <div class="form-field">
+        <label>Budget estimé (USD)</label>
+        <input type="number" id="f-budget-estime" placeholder="ex. 20000">
       </div>
       <div class="form-field">
         <label>Budget — statut</label>
@@ -485,6 +495,38 @@ const STATUS_ACCENT_COLOR = {
   'En cours':'#2ecc71','En pause':'#e74c7a','Complété':'#2ecc71','Sur la glace':'#6c757d'
 };
 const PRIO_CLASS = { 'Haute':'p-haute','Moyenne':'p-moyenne','Basse':'p-basse','':'p-none' };
+const PRIO_ORDER = { 'Haute':0, 'Moyenne':1, 'Basse':2, '':3, undefined:3, null:3 };
+
+const COL_DEFS = {
+  name:         { label: 'Projet' },
+  status:       { label: 'Statut' },
+  dates:        { label: 'Dates atelier' },
+  budgetEngage: { label: 'Budget engagé (USD)' },
+  budgetEstime: { label: 'Budget estimé (USD)' },
+  enAttente:    { label: 'Prochaine étape' },
+  par:          { label: 'Par' },
+  application:  { label: 'Application' },
+  priority:     { label: 'Priorité' },
+  notes:        { label: 'Notes' },
+};
+let tableColumns = JSON.parse(localStorage.getItem('cds_col_order')||'null')
+  || ['name','status','dates','budgetEngage','budgetEstime','enAttente','par','application','priority','notes'];
+
+let dragSrcCol = null;
+function colDragStart(e, col) { dragSrcCol = col; e.dataTransfer.effectAllowed = 'move'; e.currentTarget.style.opacity='0.5'; }
+function colDragEnd(e) { e.currentTarget.style.opacity=''; }
+function colDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect='move'; e.currentTarget.classList.add('col-drag-over'); }
+function colDragLeave(e) { e.currentTarget.classList.remove('col-drag-over'); }
+function colDrop(e, col) {
+  e.preventDefault(); e.currentTarget.classList.remove('col-drag-over');
+  if (!dragSrcCol || dragSrcCol === col) return;
+  const si = tableColumns.indexOf(dragSrcCol), di = tableColumns.indexOf(col);
+  if (si < 0 || di < 0) return;
+  tableColumns.splice(si, 1); tableColumns.splice(di, 0, dragSrcCol);
+  dragSrcCol = null;
+  localStorage.setItem('cds_col_order', JSON.stringify(tableColumns));
+  render();
+}
 
 const CATEGORIES = ['Initiatives Internes', 'InnovFest', 'Partenaires externes'];
 const CAT_STYLE = {
@@ -785,15 +827,15 @@ function parseMonths(str) {
 // FILTER
 // ============================================================
 function getFiltered() {
-  const q  = (document.getElementById('search').value||'').toLowerCase();
-  const sc = document.getElementById('filter-cat').value;
-  const sr = document.getElementById('filter-resp').value;
-  const sp = document.getElementById('filter-par').value;
+  const q   = (document.getElementById('search').value||'').toLowerCase();
+  const sc  = document.getElementById('filter-cat').value;
+  const sp  = document.getElementById('filter-par').value;
+  const spr = document.getElementById('filter-prio').value;
   return projects.filter(p =>
-    (!q  || p.name.toLowerCase().includes(q) || (p.resp||'').toLowerCase().includes(q) || (p.notes||'').toLowerCase().includes(q) || (p.application||'').toLowerCase().includes(q) || (p.par||'').toLowerCase().includes(q)) &&
-    (!sc || p.categorie === sc) &&
-    (!sr || (p.resp||'').includes(sr)) &&
-    (!sp || (p.par||'') === sp)
+    (!q   || p.name.toLowerCase().includes(q) || (p.resp||'').toLowerCase().includes(q) || (p.notes||'').toLowerCase().includes(q) || (p.application||'').toLowerCase().includes(q) || (p.par||'').toLowerCase().includes(q)) &&
+    (!sc  || p.categorie === sc) &&
+    (!sp  || (p.par||'') === sp) &&
+    (!spr || (p.priority||'') === spr)
   );
 }
 
@@ -803,6 +845,9 @@ function groupByCategory(filtered) {
   for (const p of filtered) {
     const cat = p.categorie || 'Initiatives Internes';
     if (groups[cat]) groups[cat].push(p); else groups['Initiatives Internes'].push(p);
+  }
+  for (const cat of CATEGORIES) {
+    groups[cat].sort((a,b) => (PRIO_ORDER[a.priority]??3) - (PRIO_ORDER[b.priority]??3));
   }
   return groups;
 }
@@ -822,13 +867,6 @@ function renderStats() {
   const pct = Math.min(100, Math.round((complet/9)*100));
   document.getElementById('goal-fill').style.width = pct+'%';
   document.getElementById('goal-pct').textContent = `${complet} / 9 produits complétés`;
-}
-
-function renderResponsables() {
-  const resp = [...new Set(projects.flatMap(p => (p.resp||'').split(/\s*\+\s*/).map(r=>r.trim())).filter(Boolean))].sort();
-  const sel = document.getElementById('filter-resp');
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">Tous les responsables</option>' + resp.map(r=>`<option${r===cur?' selected':''}>${r}</option>`).join('');
 }
 
 function renderParFilter() {
@@ -902,9 +940,37 @@ function renderCards(filtered) {
 // ============================================================
 // TABLE
 // ============================================================
+function renderTableCell(col, p) {
+  const prioClass = PRIO_CLASS[p.priority]||'p-none';
+  switch(col) {
+    case 'name':         return `<td class="project-name">${p.name}</td>`;
+    case 'status':       return `<td>${statusChip(p.status)}</td>`;
+    case 'dates':        return `<td style="color:var(--teal);font-size:12px">${p.dates||'—'}</td>`;
+    case 'budgetEngage': return `<td style="font-weight:600;color:var(--gold)">${fmtBudget(p.budget)||'—'}<div style="font-size:11px;color:var(--muted);font-weight:400">${p.budgetStatus||''}</div></td>`;
+    case 'budgetEstime': return `<td style="font-size:13px;color:var(--muted2)">${fmtBudget(p.budgetEstime)||'—'}</td>`;
+    case 'enAttente':    return `<td>${eaChip(p.enAttente)}</td>`;
+    case 'par':          return `<td>${parChip(p.par)}</td>`;
+    case 'application':  return `<td style="font-size:12px;color:var(--muted2)">${p.application||'—'}</td>`;
+    case 'priority':     return `<td>${p.priority ? `<span class="card-priority ${prioClass}" style="font-size:10px;padding:3px 8px;border-radius:4px">${p.priority}</span>` : '<span style="color:var(--muted)">—</span>'}</td>`;
+    case 'notes':        return `<td style="font-size:12px;color:var(--muted2);max-width:160px">${p.notes||'—'}</td>`;
+    default:             return `<td>—</td>`;
+  }
+}
+
 function renderTable(filtered) {
   const wrap = document.getElementById('view-table');
   const groups = groupByCategory(filtered);
+  const colspan = tableColumns.length;
+  const headers = tableColumns.map(col => {
+    const def = COL_DEFS[col] || { label: col };
+    return `<th draggable="true"
+      ondragstart="colDragStart(event,'${col}')"
+      ondragend="colDragEnd(event)"
+      ondragover="colDragOver(event)"
+      ondragleave="colDragLeave(event)"
+      ondrop="colDrop(event,'${col}')"
+      title="Glisser pour réorganiser">${def.label} <span style="opacity:0.25;font-size:9px">⠿</span></th>`;
+  }).join('');
   let html = '';
   for (const cat of CATEGORIES) {
     const list = groups[cat];
@@ -917,31 +983,12 @@ function renderTable(filtered) {
         <span class="section-count">${list.length}</span>
       </div>
       <table>
-        <thead><tr>
-          <th>Projet</th><th>Statut</th><th>Responsable(s)</th><th>Dates atelier</th>
-          <th>Budget ($)</th><th>Prochaine étape</th><th>Par</th><th>Application</th><th>Priorité</th><th>Notes</th>
-        </tr></thead>
+        <thead><tr>${headers}</tr></thead>
         <tbody>`;
     if (!list.length) {
-      html += `<tr><td colspan="10" style="text-align:center;padding:28px;color:var(--muted);font-style:italic">Aucun projet dans cette section.</td></tr>`;
+      html += `<tr><td colspan="${colspan}" style="text-align:center;padding:28px;color:var(--muted);font-style:italic">Aucun projet dans cette section.</td></tr>`;
     } else {
-      html += list.map(p => {
-        const budget = fmtBudget(p.budget);
-        const prioClass = PRIO_CLASS[p.priority]||'p-none';
-        return `
-        <tr onclick="openModal(${p.id})">
-          <td class="project-name">${p.name}${p.resp ? `<div class="resp-tag">${p.resp}</div>` : ''}</td>
-          <td>${statusChip(p.status)}</td>
-          <td style="color:var(--muted2);font-size:12px">${p.resp||'—'}</td>
-          <td style="color:var(--teal);font-size:12px">${p.dates||'—'}</td>
-          <td style="font-weight:600;color:var(--gold)">${budget||'—'}<div style="font-size:11px;color:var(--muted);font-weight:400">${p.budgetStatus}</div></td>
-          <td>${eaChip(p.enAttente)}</td>
-          <td>${parChip(p.par)}</td>
-          <td style="font-size:12px;color:var(--muted2)">${p.application||'—'}</td>
-          <td>${p.priority ? `<span class="card-priority ${prioClass}" style="font-size:10px;padding:3px 8px;border-radius:4px">${p.priority}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
-          <td style="font-size:12px;color:var(--muted2);max-width:160px">${p.notes||'—'}</td>
-        </tr>`;
-      }).join('');
+      html += list.map(p => `<tr onclick="openModal(${p.id})">${tableColumns.map(col => renderTableCell(col,p)).join('')}</tr>`).join('');
     }
     html += `</tbody></table></div>`;
   }
@@ -1025,7 +1072,6 @@ function applyFilters() { render(); }
 function render() {
   const filtered = getFiltered();
   renderStats();
-  renderResponsables();
   renderParFilter();
   const label = filtered.length === projects.length
     ? `${projects.length} projets`
@@ -1084,6 +1130,7 @@ function openModal(id) {
     document.getElementById('f-resp').value = p.resp || '';
     document.getElementById('f-dates').value = p.dates || '';
     document.getElementById('f-budget').value = p.budget || '';
+    document.getElementById('f-budget-estime').value = p.budgetEstime || '';
     document.getElementById('f-budget-status').value = p.budgetStatus || 'À définir';
     document.getElementById('f-en-attente').value = p.enAttente || '';
     populateParSelect(p.par || '');
@@ -1095,6 +1142,7 @@ function openModal(id) {
     document.getElementById('modal-title').textContent = 'Nouveau projet';
     ['f-name','f-resp','f-dates','f-application','f-todo','f-notes'].forEach(id => document.getElementById(id).value='');
     document.getElementById('f-budget').value = '';
+    document.getElementById('f-budget-estime').value = '';
     document.getElementById('f-categorie').value = 'Initiatives Internes';
     document.getElementById('f-status').value = 'À planifier';
     document.getElementById('f-priority').value = '';
@@ -1120,6 +1168,7 @@ function saveProject() {
     resp: document.getElementById('f-resp').value.trim(),
     dates: document.getElementById('f-dates').value.trim(),
     budget: parseFloat(document.getElementById('f-budget').value) || null,
+    budgetEstime: parseFloat(document.getElementById('f-budget-estime').value) || null,
     budgetStatus: document.getElementById('f-budget-status').value,
     enAttente: document.getElementById('f-en-attente').value,
     par: document.getElementById('f-par').value,
