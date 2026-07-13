@@ -65,6 +65,8 @@
   .view-btn.active { background: rgba(232,194,107,0.12); color: var(--gold); }
   .btn-add { background: linear-gradient(135deg, var(--gold), #c9a847); border: none; border-radius: 8px; color: #0a0e16; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.5px; padding: 9px 20px; transition: opacity 0.2s, transform 0.1s; white-space: nowrap; }
   .btn-add:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-export { background: none; border: 1px solid rgba(232,194,107,0.35); border-radius: 8px; color: var(--gold); cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; padding: 8px 16px; transition: all 0.2s; white-space: nowrap; }
+  .btn-export:hover { background: rgba(232,194,107,0.08); border-color: var(--gold); }
 
   /* GOAL BAR */
   .goal-bar-wrap { position: relative; z-index: 10; margin: 0 48px 28px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 24px; display: flex; align-items: center; gap: 20px; }
@@ -219,6 +221,52 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
 
+  /* PRINT */
+  .print-only { display: none; }
+  @media print {
+    @page { size: legal landscape; margin: 0.45in 0.4in; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body { background: #fff !important; color: #111 !important; }
+    body::before { display: none !important; }
+    header, .stats-band, .goal-bar-wrap, .toolbar, .divider-plain,
+    .sync-indicator, .setup-overlay, #overlay, #view-cards { display: none !important; }
+    .print-only { display: block !important; margin-bottom: 18px; }
+    .print-only h2 { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; color: #111; margin-bottom: 2px; }
+    .print-only p { font-size: 10px; color: #666; }
+
+    /* TABLE */
+    #view-table { display: block !important; }
+    .table-section { margin-bottom: 14px; }
+    .table-section-header { margin-bottom: 5px; padding: 4px 0; display: flex; align-items: center; gap: 6px; }
+    table { width: 100% !important; table-layout: fixed; border-collapse: collapse; }
+    thead { background: #f0f0f0 !important; }
+    th { font-size: 7px !important; padding: 4px 5px !important; color: #444 !important; border: 1px solid #ccc !important; background: #f0f0f0 !important; letter-spacing: 0.5px; }
+    td { font-size: 8px !important; padding: 4px 5px !important; border: 1px solid #e0e0e0 !important; vertical-align: top; overflow: hidden; max-width: 0; white-space: nowrap; text-overflow: ellipsis; }
+    td.project-name { font-weight: 600 !important; color: #111 !important; white-space: normal; }
+    .card-status { font-size: 7px !important; padding: 2px 5px !important; border-radius: 4px !important; }
+    .card-priority { font-size: 7px !important; padding: 2px 5px !important; border-radius: 3px !important; }
+    .ea-chip { font-size: 7px !important; padding: 2px 5px !important; border-radius: 4px !important; }
+    .par-chip { font-size: 7px !important; padding: 2px 5px !important; border-radius: 4px !important; }
+    .section-count { font-size: 9px !important; }
+    tr { page-break-inside: avoid; }
+
+    /* CALENDAR */
+    #view-calendar { display: block !important; }
+    .cal-nav { display: none !important; }
+    .cal-grid { display: grid !important; grid-template-columns: repeat(6, 1fr) !important; gap: 6px !important; padding: 0 !important; }
+    .cal-month { background: #f9f9f9 !important; border: 1px solid #ddd !important; border-radius: 6px !important; overflow: hidden; page-break-inside: avoid; }
+    .cal-month-header { background: #efefef !important; padding: 8px 10px !important; }
+    .cal-month-name { font-size: 11px !important; font-weight: 700; color: #111 !important; }
+    .cal-month-count { font-size: 8px !important; color: #555 !important; }
+    .cal-month-body { padding: 6px !important; }
+    .cal-project-chip { border-left-width: 3px !important; padding: 4px 6px !important; margin-bottom: 4px; border-radius: 4px !important; background: #f5f5f5 !important; }
+    .cal-chip-name { font-size: 8px !important; font-weight: 600; color: #111 !important; }
+    .cal-chip-meta { display: none !important; }
+    .cal-chip-dates { font-size: 7px !important; color: #555 !important; }
+    .cal-empty { font-size: 8px !important; color: #aaa !important; padding: 8px 0 !important; }
+    .cal-range-label { display: none !important; }
+  }
+
   /* SETUP OVERLAY */
   .setup-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
   .setup-overlay.hidden { display: none; }
@@ -360,6 +408,7 @@
       <option>Haute</option><option>Moyenne</option><option>Basse</option>
     </select>
   </div>
+  <button class="btn-export" onclick="exportPDF()" id="btn-export" title="Exporter en PDF (vue Tableau ou Calendrier)">⬇ Export PDF</button>
   <button class="btn-add" onclick="openModal()">+ Nouveau projet</button>
 </div>
 
@@ -367,6 +416,12 @@
   <div class="divider-plain-line"></div>
   <div class="divider-plain-text" id="proj-count-label">11 projets</div>
   <div class="divider-plain-line"></div>
+</div>
+
+<!-- PRINT HEADER (visible only when printing) -->
+<div class="print-only" style="padding:0 48px">
+  <h2>Suivi des Projets d'Innovation — Cirque du Soleil</h2>
+  <p id="print-date-label"></p>
 </div>
 
 <!-- CARDS VIEW -->
@@ -1088,7 +1143,20 @@ function setView(v) {
   document.getElementById('view-table').style.display    = v==='table'    ? 'block' : 'none';
   document.getElementById('view-calendar').style.display = v==='calendar' ? 'block' : 'none';
   ['cards','table','calendar'].forEach(x => document.getElementById('btn-'+x).classList.toggle('active', v===x));
+  const exportBtn = document.getElementById('btn-export');
+  if (exportBtn) exportBtn.style.display = (v === 'cards') ? 'none' : 'inline-flex';
   render();
+}
+
+function exportPDF() {
+  if (currentView === 'cards') {
+    alert('Veuillez basculer en vue Tableau ou Calendrier avant d\'exporter.');
+    return;
+  }
+  document.getElementById('print-date-label').textContent =
+    'Exporté le ' + new Date().toLocaleDateString('fr-CA', { year:'numeric', month:'long', day:'numeric' }) +
+    ' · ' + projects.length + ' projets';
+  window.print();
 }
 
 // ============================================================
