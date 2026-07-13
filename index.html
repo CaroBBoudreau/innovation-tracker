@@ -223,6 +223,7 @@
 
   /* PRINT */
   .print-only { display: none; }
+  .print-stats-band { display: none; }
   @media print {
     @page { size: legal landscape; margin: 0.45in 0.4in; }
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -230,39 +231,49 @@
     body::before { display: none !important; }
     header, .stats-band, .goal-bar-wrap, .toolbar, .divider-plain,
     .sync-indicator, .setup-overlay, #overlay, #view-cards { display: none !important; }
-    .print-only { display: block !important; margin-bottom: 18px; }
-    .print-only h2 { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; color: #111; margin-bottom: 2px; }
-    .print-only p { font-size: 10px; color: #666; }
+    #view-table { display: none !important; }
+    #view-calendar { display: none !important; }
+    body.printing-table #view-table { display: block !important; }
+    body.printing-calendar #view-calendar { display: block !important; }
+
+    .print-only { display: block !important; margin-bottom: 14px; }
+    .print-only h2 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: #111; margin-bottom: 8px; }
+    .print-stats-band { display: flex !important; gap: 36px; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 10px 0; margin: 8px 0 6px; }
+    .print-stat { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+    .print-stat span { font-size: 22px; font-weight: 700; color: #111; display: block; line-height: 1.2; font-family: 'Cormorant Garamond', serif; }
+    #print-date-label { font-size: 9px; color: #888; margin-top: 6px; }
 
     /* TABLE */
-    #view-table { display: block !important; }
     .table-section { margin-bottom: 14px; }
     .table-section-header { margin-bottom: 5px; padding: 4px 0; display: flex; align-items: center; gap: 6px; }
-    table { width: 100% !important; table-layout: fixed; border-collapse: collapse; }
+    table { width: 100% !important; table-layout: auto; border-collapse: collapse; }
     thead { background: #f0f0f0 !important; }
-    th { font-size: 7px !important; padding: 4px 5px !important; color: #444 !important; border: 1px solid #ccc !important; background: #f0f0f0 !important; letter-spacing: 0.5px; }
-    td { font-size: 8px !important; padding: 4px 5px !important; border: 1px solid #e0e0e0 !important; vertical-align: top; overflow: hidden; max-width: 0; white-space: nowrap; text-overflow: ellipsis; }
-    td.project-name { font-weight: 600 !important; color: #111 !important; white-space: normal; }
+    th { font-size: 7px !important; padding: 5px 6px !important; color: #444 !important; border: 1px solid #ccc !important; background: #f0f0f0 !important; letter-spacing: 0.5px; white-space: nowrap; }
+    td { font-size: 8px !important; padding: 5px 6px !important; border: 1px solid #e0e0e0 !important; vertical-align: top; color: #333; }
+    tr { page-break-inside: avoid; }
+    [data-col="application"] { display: none !important; }
+    [data-col="name"] { font-size: 10px !important; font-weight: 700 !important; color: #111 !important; white-space: normal !important; min-width: 110px; }
+    [data-col="budgetEngage"] { font-size: 12px !important; font-weight: 700 !important; color: #111 !important; white-space: nowrap; }
+    [data-col="notes"] { white-space: normal !important; color: #111 !important; min-width: 200px; }
+    .budget-status-sub { display: none !important; }
     .card-status { font-size: 7px !important; padding: 2px 5px !important; border-radius: 4px !important; }
     .card-priority { font-size: 7px !important; padding: 2px 5px !important; border-radius: 3px !important; }
-    .ea-chip { font-size: 7px !important; padding: 2px 5px !important; border-radius: 4px !important; }
-    .par-chip { font-size: 7px !important; padding: 2px 5px !important; border-radius: 4px !important; }
+    .ea-chip { font-size: 7px !important; padding: 2px 5px !important; }
+    .par-chip { font-size: 7px !important; padding: 2px 5px !important; }
     .section-count { font-size: 9px !important; }
-    tr { page-break-inside: avoid; }
 
     /* CALENDAR */
-    #view-calendar { display: block !important; }
     .cal-nav { display: none !important; }
-    .cal-grid { display: grid !important; grid-template-columns: repeat(6, 1fr) !important; gap: 6px !important; padding: 0 !important; }
+    .cal-grid { display: grid !important; grid-template-columns: repeat(6, 1fr) !important; gap: 7px !important; padding: 0 !important; }
     .cal-month { background: #f9f9f9 !important; border: 1px solid #ddd !important; border-radius: 6px !important; overflow: hidden; page-break-inside: avoid; }
-    .cal-month-header { background: #efefef !important; padding: 8px 10px !important; }
-    .cal-month-name { font-size: 11px !important; font-weight: 700; color: #111 !important; }
-    .cal-month-count { font-size: 8px !important; color: #555 !important; }
-    .cal-month-body { padding: 6px !important; }
-    .cal-project-chip { border-left-width: 3px !important; padding: 4px 6px !important; margin-bottom: 4px; border-radius: 4px !important; background: #f5f5f5 !important; }
-    .cal-chip-name { font-size: 8px !important; font-weight: 600; color: #111 !important; }
+    .cal-month-header { background: #e5e5e5 !important; padding: 10px 12px !important; }
+    .cal-month-name { font-size: 15px !important; font-weight: 700; color: #111 !important; }
+    .cal-month-count { font-size: 9px !important; color: #555 !important; }
+    .cal-month-body { padding: 7px !important; }
+    .cal-project-chip { border-left-width: 3px !important; padding: 5px 7px !important; margin-bottom: 5px; border-radius: 4px !important; background: #f0f0f0 !important; }
+    .cal-chip-name { font-size: 10px !important; font-weight: 700; color: #111 !important; white-space: normal !important; line-height: 1.35; }
     .cal-chip-meta { display: none !important; }
-    .cal-chip-dates { font-size: 7px !important; color: #555 !important; }
+    .cal-chip-dates { font-size: 8px !important; color: #555 !important; margin-top: 2px; }
     .cal-empty { font-size: 8px !important; color: #aaa !important; padding: 8px 0 !important; }
     .cal-range-label { display: none !important; }
   }
@@ -421,6 +432,12 @@
 <!-- PRINT HEADER (visible only when printing) -->
 <div class="print-only" style="padding:0 48px">
   <h2>Suivi des Projets d'Innovation — Cirque du Soleil</h2>
+  <div class="print-stats-band">
+    <div class="print-stat"><span id="ps-total">—</span>Projets total</div>
+    <div class="print-stat"><span id="ps-complet">—</span>Complétés</div>
+    <div class="print-stat"><span id="ps-actifs">—</span>En cours / atelier</div>
+    <div class="print-stat"><span id="ps-budget">—</span>Budget engagé (USD)</div>
+  </div>
   <p id="print-date-label"></p>
 </div>
 
@@ -998,16 +1015,16 @@ function renderCards(filtered) {
 function renderTableCell(col, p) {
   const prioClass = PRIO_CLASS[p.priority]||'p-none';
   switch(col) {
-    case 'name':         return `<td class="project-name">${p.name}</td>`;
-    case 'status':       return `<td>${statusChip(p.status)}</td>`;
-    case 'dates':        return `<td style="color:var(--teal);font-size:12px">${p.dates||'—'}</td>`;
-    case 'budgetEngage': return `<td style="font-weight:600;color:var(--gold)">${fmtBudget(p.budget)||'—'}<div style="font-size:11px;color:var(--muted);font-weight:400">${p.budgetStatus||''}</div></td>`;
-    case 'budgetEstime': return `<td style="font-size:13px;color:var(--muted2)">${fmtBudget(p.budgetEstime)||'—'}</td>`;
-    case 'enAttente':    return `<td>${eaChip(p.enAttente)}</td>`;
-    case 'par':          return `<td>${parChip(p.par)}</td>`;
-    case 'application':  return `<td style="font-size:12px;color:var(--muted2)">${p.application||'—'}</td>`;
-    case 'priority':     return `<td>${p.priority ? `<span class="card-priority ${prioClass}" style="font-size:10px;padding:3px 8px;border-radius:4px">${p.priority}</span>` : '<span style="color:var(--muted)">—</span>'}</td>`;
-    case 'notes':        return `<td style="font-size:12px;color:var(--muted2);max-width:160px">${p.notes||'—'}</td>`;
+    case 'name':         return `<td data-col="name" class="project-name">${p.name}</td>`;
+    case 'status':       return `<td data-col="status">${statusChip(p.status)}</td>`;
+    case 'dates':        return `<td data-col="dates" style="color:var(--teal);font-size:12px">${p.dates||'—'}</td>`;
+    case 'budgetEngage': return `<td data-col="budgetEngage" style="font-weight:600;color:var(--gold)">${fmtBudget(p.budget)||'—'}<div class="budget-status-sub" style="font-size:11px;color:var(--muted);font-weight:400">${p.budgetStatus||''}</div></td>`;
+    case 'budgetEstime': return `<td data-col="budgetEstime" style="font-size:13px;color:var(--muted2)">${fmtBudget(p.budgetEstime)||'—'}</td>`;
+    case 'enAttente':    return `<td data-col="enAttente">${eaChip(p.enAttente)}</td>`;
+    case 'par':          return `<td data-col="par">${parChip(p.par)}</td>`;
+    case 'application':  return `<td data-col="application" style="font-size:12px;color:var(--muted2)">${p.application||'—'}</td>`;
+    case 'priority':     return `<td data-col="priority">${p.priority ? `<span class="card-priority ${prioClass}" style="font-size:10px;padding:3px 8px;border-radius:4px">${p.priority}</span>` : '<span style="color:var(--muted)">—</span>'}</td>`;
+    case 'notes':        return `<td data-col="notes" style="font-size:12px;color:var(--muted2);max-width:160px">${p.notes||'—'}</td>`;
     default:             return `<td>—</td>`;
   }
 }
@@ -1018,7 +1035,7 @@ function renderTable(filtered) {
   const colspan = tableColumns.length;
   const headers = tableColumns.map(col => {
     const def = COL_DEFS[col] || { label: col };
-    return `<th draggable="true"
+    return `<th data-col="${col}" draggable="true"
       ondragstart="colDragStart(event,'${col}')"
       ondragend="colDragEnd(event)"
       ondragover="colDragOver(event)"
@@ -1153,10 +1170,19 @@ function exportPDF() {
     alert('Veuillez basculer en vue Tableau ou Calendrier avant d\'exporter.');
     return;
   }
+  const total   = projects.length;
+  const complet = projects.filter(p => p.status === 'Complété').length;
+  const actifs  = projects.filter(p => ['En cours','Atelier planifié'].includes(p.status)).length;
+  const budgetTotal = projects.reduce((s,p) => s+(p.budget||0), 0);
+  document.getElementById('ps-total').textContent   = total;
+  document.getElementById('ps-complet').textContent = complet;
+  document.getElementById('ps-actifs').textContent  = actifs;
+  document.getElementById('ps-budget').textContent  = budgetTotal > 0 ? '$'+budgetTotal.toLocaleString('fr-CA') : '—';
   document.getElementById('print-date-label').textContent =
-    'Exporté le ' + new Date().toLocaleDateString('fr-CA', { year:'numeric', month:'long', day:'numeric' }) +
-    ' · ' + projects.length + ' projets';
+    'Exporté le ' + new Date().toLocaleDateString('fr-CA', { year:'numeric', month:'long', day:'numeric' });
+  document.body.classList.add('printing-' + currentView);
   window.print();
+  setTimeout(() => document.body.classList.remove('printing-table','printing-calendar'), 500);
 }
 
 // ============================================================
